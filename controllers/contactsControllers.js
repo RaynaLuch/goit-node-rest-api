@@ -2,6 +2,7 @@ import contactsService from "../services/contactsServices.js";
 import {
   createContactSchema,
   updateContactSchema,
+  updateStatusContactSchema,
 } from "../schemas/contactsSchemas.js";
 
 export const getAllContacts = async (req, res) => {
@@ -60,6 +61,29 @@ export const updateContact = async (req, res) => {
       contactUpdate.name,
       contactUpdate.email,
       contactUpdate.phone
+    );
+    if (updatedContact) {
+      res.status(200).send(updatedContact);
+    } else {
+      res.status(404).send({ message: "Not found" });
+    }
+  } else {
+    res.status(400).send({ message: error.message });
+  }
+};
+
+export const updateStatusContact = async (req, res) => {
+  const contactUpdate = req.body;
+  if (!contactUpdate.favorite) {
+    res.status(400).send({ message: "Body must have favorite field" });
+    return;
+  }
+  const { error, value } = updateStatusContactSchema.validate(contactUpdate);
+
+  if (!error) {
+    const updatedContact = await contactsService.updateStatusContact(
+      req.params.id,
+      contactUpdate.favorite
     );
     if (updatedContact) {
       res.status(200).send(updatedContact);

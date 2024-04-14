@@ -1,59 +1,66 @@
 import { log } from "console";
-import * as fs from "fs/promises";
-import * as path from "path";
+import * as mongoose from "mongoose";
 
-const contactsPath = path.normalize("./db/contacts.json");
+const Schema = mongoose.Schema;
+
+const contactsSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Set name for contact"],
+    },
+    email: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { versionKey: false }
+);
+
+const Contact = mongoose.model("contact", contactsSchema, "contacts");
 
 async function listContacts() {
-  // ...твій код. Повертає масив контактів.
   try {
-    const data = await fs.readFile(contactsPath);
-    return JSON.parse(data.toString());
+    const data = await Contact.find();
+    return data;
   } catch (err) {
     console.log(err.message);
   }
 }
 
 async function getContactById(contactId) {
-  // ...твій код. Повертає об'єкт контакту з таким id. Повертає null, якщо контакт з таким id не знайдений.
   try {
-    const data = await fs.readFile(contactsPath);
-    const records = JSON.parse(data.toString());
-    const findRecord = records.find((record) => record.id === contactId);
-    return findRecord ? findRecord : null;
+    const data = await Contact.findOne({ _id: contactId });
+    return data;
   } catch (err) {
     console.log(err.message);
   }
 }
 
 async function removeContact(contactId) {
-  // ...твій код. Повертає об'єкт видаленого контакту. Повертає null, якщо контакт з таким id не знайдений.
   try {
-    const data = await fs.readFile(contactsPath);
-    const records = JSON.parse(data.toString());
-    const findRecord = records.find((record) => record.id === contactId);
-    const filteredRecords = records.filter((record) => record.id !== contactId);
-    fs.writeFile(contactsPath, JSON.stringify(filteredRecords));
-    return findRecord ? findRecord : null;
+    const deletedContact = await Contact.findByIdAndDelete(contactId);
+    return deletedContact ? deletedContact : null;
   } catch (err) {
     console.log(err.message);
   }
 }
 
 async function addContact(name, email, phone) {
-  // ...твій код. Повертає об'єкт доданого контакту (з id).
   try {
-    const data = await fs.readFile(contactsPath);
-    const records = JSON.parse(data.toString());
     const newRecord = {
-      id: crypto.randomUUID(),
       name: name,
       email: email,
       phone: phone,
     };
-    records.push(newRecord);
-    fs.writeFile(contactsPath, JSON.stringify(records));
-    return newRecord;
+    const newContact = await Contact.create(newRecord);
+    return newContact;
   } catch (err) {
     console.log(err.message);
   }
@@ -61,21 +68,35 @@ async function addContact(name, email, phone) {
 
 async function updateContact(contactId, name, email, phone) {
   try {
-    const data = await fs.readFile(contactsPath);
-    const records = JSON.parse(data.toString());
-    const findRecord = records.find((record) => record.id === contactId);
-    if (!findRecord) return null;
     const recordUpdate = {};
     if (name) recordUpdate.name = name;
     if (email) recordUpdate.email = email;
     if (phone) recordUpdate.phone = phone;
-
-    const updatedRecord = { ...findRecord, ...recordUpdate };
-
-    const updatedRecords = records.filter((record) => record.id !== contactId);
-    updatedRecords.push(updatedRecord);
-    fs.writeFile(contactsPath, JSON.stringify(updatedRecords));
+    const updatedRecord = await Contact.findByIdAndUpdate(
+      contactId,
+      recordUpdate,
+      {
+        new: true,
+      }
+    );
     return updatedRecord;
+  } catch (err) {
+    console.log(err.message);
+  }
+}
+
+async function updateStatusContact(contactId, favorite) {
+  try {
+    const recordUpdate = {};
+    if (favorite) recordUpdate.favorite = favorite;
+    const updatedContact = await Contact.findByIdAndUpdate(
+      contactId,
+      recordUpdate,
+      {
+        new: true,
+      }
+    );
+    return updatedContact;
   } catch (err) {
     console.log(err.message);
   }
@@ -86,4 +107,5 @@ export default {
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
 };
