@@ -74,7 +74,8 @@ export const updateContact = async (req, res) => {
 
 export const updateStatusContact = async (req, res) => {
   const contactUpdate = req.body;
-  if (!contactUpdate.favorite) {
+
+  if (contactUpdate.favorite === undefined) {
     res.status(400).send({ message: "Body must have favorite field" });
     return;
   }

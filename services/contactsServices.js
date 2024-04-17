@@ -88,7 +88,7 @@ async function updateContact(contactId, name, email, phone) {
 async function updateStatusContact(contactId, favorite) {
   try {
     const recordUpdate = {};
-    if (favorite) recordUpdate.favorite = favorite;
+    recordUpdate.favorite = favorite;
     const updatedContact = await Contact.findByIdAndUpdate(
       contactId,
       recordUpdate,
